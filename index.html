@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>環境音效混音器</title>
+    <style>
+        :root {
+            --background: #ffffff;
+            --surface: #f8f9fa;
+            --primary: #0078d4;
+            --text: #202020;
+            --text-secondary: #666666;
+            --hover: #f0f0f0;
+            --border: #e0e0e0;
+            --slider-thumb: #0078d4;
+            --slider-track: #d0d0d0;
+            --card-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --background: #202020;
+            --surface: #2d2d2d;
+            --primary: #60cdff;
+            --text: #ffffff;
+            --text-secondary: #a0a0a0;
+            --hover: #383838;
+            --border: #404040;
+            --slider-thumb: #60cdff;
+            --slider-track: #505050;
+            --card-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            background: var(--background);
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--hover);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            filter: brightness(110%);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+        }
+
+        .theme-toggle:hover {
+            background: var(--hover);
+        }
+
+        .sound-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 18px;
+            padding: 18px 0;
+        }
+
+        .sound-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .sound-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .sound-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .sound-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .sound-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .volume-control {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .volume-slider {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--slider-track);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--slider-thumb);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .volume-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .volume-info {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .playing {
+            color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .sound-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .controls {
+                width: 100%;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="title">環境音效混音器</h1>
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="playAll()">
+                        <span class="play-icon">▶</span> 播放全部
+                    </button>
+                    <button class="btn" onclick="stopAll()">停止全部</button>
+                    <button class="btn" onclick="resetAll()">重置音量</button>
+                    <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sound-grid" id="sound-list"></div>
+    </div>
+
+    <script>
+        const sounds = [
+            // 雨聲排第一
+            { name: '雨聲', file: 'Sounds/rain.wav', icon: '🌧', defaultVolume: 0.5 },
+            { name: '海灘', file: 'Sounds/beach.wav', icon: '🌊', defaultVolume: 0 },
+            { name: '鳥鳴', file: 'Sounds/birds.wav', icon: '🐦', defaultVolume: 0 },
+            { name: '城市', file: 'Sounds/citystreet.wav', icon: '🌆', defaultVolume: 0 },
+            { name: '咖啡廳', file: 'Sounds/coffeeshop.mp3', icon: '☕', defaultVolume: 0 },
+            { name: '溪流', file: 'Sounds/creek.wav', icon: '💧', defaultVolume: 0 },
+            { name: '壁爐', file: 'Sounds/fireplace.wav', icon: '🔥', defaultVolume: 0 },
+            { name: '雨林', file: 'Sounds/Rainforest.mp3', icon: '🌴', defaultVolume: 0 },
+            { name: '雷聲', file: 'Sounds/thunder.mp3', icon: '⚡', defaultVolume: 0 },
+            { name: '水下', file: 'Sounds/underwater.wav', icon: '🌊', defaultVolume: 0 },
+            { name: '瀑布', file: 'Sounds/waterfall.wav', icon: '💦', defaultVolume: 0 },
+            { name: '白噪音', file: 'Sounds/whitenoise.wav', icon: '📻', defaultVolume: 0 },
+            { name: '風聲', file: 'Sounds/wind.wav', icon: '💨', defaultVolume: 0 }
+        ];
+
+        const audioElements = {};
+
+        function initializeSoundList() {
+            const container = document.getElementById('sound-list');
+            
+            sounds.forEach(sound => {
+                const audio = new Audio(sound.file);
+                audio.loop = true;
+                audio.volume = sound.defaultVolume;
+                audioElements[sound.file] = {
+                    audio: audio,
+                    isPlaying: false,
+                    defaultVolume: sound.defaultVolume
+                };
+
+                const div = document.createElement('div');
+                div.className = 'sound-card';
+                div.innerHTML = `
+                    <div class="sound-header">
+                        <div class="sound-icon">${sound.icon}</div>
+                        <div class="sound-name">${sound.name}</div>
+                    </div>
+                    <div class="volume-control">
+                        <input type="range" 
+                               class="volume-slider" 
+                               min="0" 
+                               max="100" 
+                               value="${sound.defaultVolume * 100}" 
+                               data-sound="${sound.file}">
+                        <div class="volume-info">
+                            <span class="status" data-sound="${sound.file}">
+                                ${sound.defaultVolume > 0 ? '播放中' : '靜音'}
+                            </span>
+                            <span class="percentage">${sound.defaultVolume * 100}%</span>
+                        </div>
+                    </div>
+                `;
+
+                const slider = div.querySelector('.volume-slider');
+                const percentage = div.querySelector('.percentage');
+                const status = div.querySelector('.status');
+
+                slider.addEventListener('input', (e) => {
+                    const volume = e.target.value / 100;
+                    const soundFile = e.target.dataset.sound;
+                    const audioObj = audioElements[soundFile];
+                    
+                    audioObj.audio.volume = volume;
+                    percentage.textContent = `${e.target.value}%`;
+
+                    if (volume === 0) {
+                        audioObj.audio.pause();
+                        audioObj.isPlaying = false;
+                        status.textContent = '靜音';
+                        status.classList.remove('playing');
+                    } else {
+                        audioObj.audio.play();
+                        audioObj.isPlaying = true;
+                        status.textContent = '播放中';
+                        status.classList.add('playing');
+                    }
+                });
+
+                if (sound.defaultVolume > 0) {
+                    audio.play();
+                    status.textContent = '播放中';
+                    status.classList.add('playing');
+                }
+
+                container.appendChild(div);
+            });
+        }
+
+        function playAll() {
+            Object.entries(audioElements).forEach(([file, obj]) => {
+                if (obj.audio.volume > 0) {
+                    obj.audio.play();
+                    obj.isPlaying = true;
+                    const status = document.querySelector(`.status[data-sound="${file}"]`);
+                    status.textContent = '播放中';
+                    status.classList.add('playing');
+                }
+            });
+        }
+
+        function stopAll() {
+            Object.entries(audioElements).forEach(([file, obj]) => {
+                obj.audio.pause();
+                obj.audio.currentTime = 0;
+                obj.isPlaying = false;
+                const status = document.querySelector(`.status[data-sound="${file}"]`);
+                status.textContent = obj.audio.volume > 0 ? '停止' : '靜音';
+                status.classList.remove('playing');
+            });
+        }
+
+        function resetAll() {
+            Object.entries(audioElements).forEach(([file, obj]) => {
+                const sound = sounds.find(s => s.file === file);
+                obj.audio.volume = sound.defaultVolume;
+                const slider = document.querySelector(`input[data-sound="${file}"]`);
+                const volumeInfo = slider.parentElement.querySelector('.volume-info');
+                const percentage = volumeInfo.querySelector('.percentage');
+                const status = volumeInfo.querySelector('.status');
+                
+                slider.value = sound.defaultVolume * 100;
+                percentage.textContent = `${sound.defaultVolume * 100}%`;
+                
+                if (sound.defaultVolume === 0) {
+                    obj.audio.pause();
+                    obj.isPlaying = false;
+                    status.textContent = '靜音';
+                    status.classList.remove('playing');
+                } else {
+                    obj.audio.play();
+                    obj.isPlaying = true;
+                    status.textContent = '播放中';
+                    status.classList.add('playing');
+                }
+            });
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+        }
+
+        initializeSoundList();
+    </script>
+</body>
+</html>
